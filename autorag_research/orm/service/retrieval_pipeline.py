@@ -467,3 +467,85 @@ class RetrievalPipelineService(BaseService):
                     raise ValueError(f"Query {query_id} not found")  # noqa: TRY003
                 query_texts.append(query.contents)
         return query_texts
+
+    def get_all_chunks(self) -> list[tuple[int | str, str]]:
+        """Fetch all chunk IDs and contents from database.
+
+        Used by GrepRAG pipeline to export chunks to files for ripgrep search.
+
+        Returns:
+            List of (chunk_id, contents) tuples.
+        """
+        all_chunks: list[tuple[int | str, str]] = []
+        offset = 0
+        batch_size = 1000
+        while True:
+            with self._create_uow() as uow:
+                chunks = uow.chunks.get_all(limit=batch_size, offset=offset)
+                if not chunks:
+                    break
+                for chunk in chunks:
+                    if chunk.contents:
+                        all_chunks.append((chunk.id, chunk.contents))
+                offset += batch_size
+        logger.info(f"Fetched {len(all_chunks)} chunks from database")
+        return all_chunks
+
+    def grep_search_by_keywords(
+        self,
+        keywords: list[str],
+        top_k: int = 10,
+    ) -> list[dict[str, Any]]:
+        """Execute grep-style keyword search using raw keywords (no Query entity needed).
+
+        Args:
+            keywords: List of keywords to search for.
+            top_k: Number of top results to return.
+
+        Returns:
+            List of result dicts containing doc_id, score, and content.
+        """
+        with self._create_uow() as uow:
+            results = uow.chunks.grep_search(
+                keywords=keywords,
+                limit=top_k,
+            )
+            return [self._make_retrieval_result(chunk, score) for chunk, score in results]
+
+    def grep_search(
+        self,
+        query_ids: list[int | str],
+        keywords_per_query: list[list[str]],
+        top_k: int = 10,
+    ) -> list[list[dict[str, Any]]]:
+        """Execute grep-style keyword search for given query IDs.
+
+        Uses keyword-based ILIKE search on the chunks table.
+
+        Args:
+            query_ids: List of query IDs to search for.
+            keywords_per_query: List of keyword lists, one per query.
+            top_k: Number of top results to return per query.
+
+        Returns:
+            List of result lists, one per query. Each result dict contains:
+            - doc_id: Chunk ID
+            - score: Match score (normalized to [0, 1])
+            - content: Chunk text content
+
+        Raises:
+            ValueError: If query_ids and keywords_per_query lengths don't match.
+        """
+        if len(query_ids) != len(keywords_per_query):
+            msg = "query_ids and keywords_per_query must have the same length"
+            raise ValueError(msg)
+
+        all_results: list[list[dict[str, Any]]] = []
+        with self._create_uow() as uow:
+            for keywords in keywords_per_query:
+                results = uow.chunks.grep_search(
+                    keywords=keywords,
+                    limit=top_k,
+                )
+                all_results.append([self._make_retrieval_result(chunk, score) for chunk, score in results])
+        return all_results

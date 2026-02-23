@@ -11,7 +11,7 @@
 
 # Target database name (created by ingest command)
 # Recommend to override via CLI argument --db-name
-db_name: beir_scifact_test
+db_name: mrtydi_korean_full
 
 # Executor settings
 max_retries: 3
@@ -20,11 +20,16 @@ eval_batch_size: 100
 # Pipeline configurations
 # YAML key = folder path under configs/pipelines/
 pipelines:
-  retrieval: [bm25]           # → configs/pipelines/retrieval/bm25.yaml
-  generation: [basic_rag]   # → configs/pipelines/generation/basic_rag.yaml
+  retrieval:
+    - rag_fusion_gemini  # RAG-Fusion: multi-query variations + RRF
 
 # Metric configurations
 # YAML key = folder path under configs/metrics/
 metrics:
-  retrieval: [recall, ndcg]   # → configs/metrics/retrieval/*.yaml
-  generation: [rouge]       # → configs/metrics/generation/rouge.yaml
+  retrieval:
+    - recall            # Fraction of relevant items retrieved
+    - ndcg              # Normalized Discounted Cumulative Gain
+    - mrr               # Mean Reciprocal Rank
+    - map               # Mean Average Precision
+  generation:
+    - rouge             # N-gram overlap with ground truth

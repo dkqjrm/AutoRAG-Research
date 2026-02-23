@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 ## Project Overview
 
 AutoRAG-Research is a Python framework for automating RAG (Retrieval-Augmented Generation) research workflows.
@@ -70,6 +72,40 @@ ORM Models (orm/models/) - SQLAlchemy with pgvector
 - `config.py` - Configuration dataclasses (ExecutorConfig, BasePipelineConfig, BaseMetricConfig)
 - `orm/schema_factory.py` - Dynamic schema creation with custom embedding dimensions via `create_schema(dim)`
 
+## Config Resolution System
+
+The framework uses **Hydra/OmegaConf** for YAML-based configuration. Config names in `experiment.yaml` map to files via folder structure:
+
+```
+configs/
+├── experiment.yaml          # Top-level: references pipeline/metric names
+├── db.yaml                  # Database connection config
+├── llm/                     # LLM configs (referenced by name without .yaml)
+│   ├── openai-gpt5-mini.yaml
+│   └── anthropic-claude-4.5-sonnet.yaml
+├── pipelines/
+│   ├── retrieval/           # bm25 → configs/pipelines/retrieval/bm25.yaml
+│   └── generation/          # basic_rag → configs/pipelines/generation/basic_rag.yaml
+└── metrics/
+    ├── retrieval/           # recall → configs/metrics/retrieval/recall.yaml
+    └── generation/          # rouge → configs/metrics/generation/rouge.yaml
+```
+
+`ConfigResolver` in `cli/config_resolver.py` resolves names to paths. Each pipeline/metric YAML uses `_target_` for Hydra instantiation:
+
+```yaml
+# configs/pipelines/retrieval/bm25.yaml
+_target_: autorag_research.config.BM25PipelineConfig
+name: bm25
+tokenizer: bert
+```
+
+**Model injection** (`injection.py`): LLM/embedding configs are loaded via `load_llm(name)` / `load_embedding(name)`, which reads `configs/llm/<name>.yaml` or `configs/embedding/<name>.yaml` and uses `hydra.utils.instantiate()` to create LangChain model instances.
+
+## Data Ingestors
+
+Dataset ingestors live in `data/` and follow a registry pattern (`data/registry.py`). Each ingestor (e.g., `beir.py`, `ragbench.py`, `vidore.py`) extends a base class and is registered by name. Pre-ingested datasets with embeddings can be downloaded and restored via `autorag-research data restore`.
+
 ## Database Patterns
 
 - **Generic Repository:** Base CRUD in `orm/repository/base.py`, specialized repos extend it
@@ -78,6 +114,7 @@ ORM Models (orm/models/) - SQLAlchemy with pgvector
 - **Vector Search:** Uses VectorChord with pgvector `Vector` type
 - **Driver:** psycopg3 (imported as `psycopg`)
 - **Async:** Use SQLAlchemy's greenlet-based bridging (`sqlalchemy.util.concurrency.greenlet_spawn`)
+- **Connection:** `DBConnection.from_env()` reads from `postgresql/.env` for host, port, username, password, database
 
 ## Testing Guidelines
 
@@ -92,6 +129,7 @@ ORM Models (orm/models/) - SQLAlchemy with pgvector
 @pytest.mark.gpu       # Requires GPU
 @pytest.mark.api       # Requires LLM/API calls (prefer mocks)
 @pytest.mark.data      # Downloads external data
+@pytest.mark.ci_skip   # Skipped in CI environment
 @pytest.mark.asyncio   # Async test
 ```
 
@@ -105,7 +143,7 @@ Prefer mocks over real API calls (use LangChain FakeListLLM/FakeEmbeddings from 
 - Type checking: ty
 
 ## Logging
-- Alwasy use `logger = logging.getLogger("AutoRAG-Research")` to initialize logger
+- Always use `logger = logging.getLogger("AutoRAG-Research")` to initialize logger
 - Do not use print statements for logging. Or any other logging methods.
 
 ## Utility Functions (DRY!)
@@ -130,6 +168,8 @@ Detailed patterns and examples are in `/ai_instructions/`:
 - `db_schema.md` - Complete DBML schema
 - `test_code_generation_instructions.md` - Testing conventions
 - `utility_reference.md` - **MANDATORY** utility & service method catalog (read before implementing)
+- `dataset_ingestor_workflow.md` - Dataset ingestor implementation workflow
+- `schema_migration.md` - Schema migration procedures
 
 ## Strict Rules to follow
 

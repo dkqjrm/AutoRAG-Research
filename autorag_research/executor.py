@@ -251,8 +251,8 @@ class Executor:
                 run_result = pipeline.run(**config.get_run_kwargs())
                 pipeline_id = run_result["pipeline_id"]
 
-                # Verify completion
-                if self._verify_pipeline_completion(pipeline_id, config.pipeline_type):
+                # Verify completion (skip for pipelines that may have partial results)
+                if config.skip_verification or self._verify_pipeline_completion(pipeline_id, config.pipeline_type):
                     logger.info(
                         f"Pipeline '{config.name}' completed successfully "
                         f"(pipeline_id={pipeline_id}, "

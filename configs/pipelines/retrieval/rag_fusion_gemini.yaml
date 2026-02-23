@@ -1,0 +1,12 @@
+_target_: autorag_research.pipelines.retrieval.rag_fusion.RAGFusionPipelineConfig
+description: "RAG-Fusion with Gemini 2.5 Flash + bge-m3 (multi-query RRF)"
+name: rag_fusion_gemini
+llm: google-gemini-2.5-flash
+embedding: huggingface
+num_queries: 4
+rrf_k: 60
+top_k: 10
+batch_size: 10
+max_concurrency: 8
+max_retries: 3
+retry_delay: 1.0

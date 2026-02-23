@@ -1,0 +1,46 @@
+# IRCoT with Gemini 2.5 Flash
+#
+# Interleaving Retrieval with Chain-of-Thought using Korean BM25.
+# Alternates between generating reasoning steps and retrieving more context.
+#
+_target_: autorag_research.pipelines.generation.ircot.IRCoTGenerationPipelineConfig
+description: "IRCoT with Gemini 2.5 Flash + Korean BM25"
+name: ircot_gemini
+retrieval_pipeline_name: bm25_korean
+llm: google-gemini-2.5-flash
+k_per_step: 4
+max_steps: 8
+paragraph_budget: 15
+stop_sequence: "answer is:"
+top_k: 4
+batch_size: 5
+max_concurrency: 4
+max_retries: 3
+retry_delay: 1.0
+reasoning_prompt_template: |
+  당신은 단계적 사고(Chain-of-Thought)를 사용하여 다단계 질문에 답변하고 있습니다.
+
+  질문: {query}
+
+  참조 문서:
+  {paragraphs}
+
+  이전 사고 과정:
+  {cot_history}
+
+  다음 추론 단계를 생성하세요. 어떤 정보가 필요한지, 어떤 결론을 도출할 수 있는지 단계적으로 생각하세요.
+
+  질문에 답변할 충분한 정보가 있다면: "The answer is: [답변]"이라고 작성하세요.
+
+  다음 사고:
+qa_prompt_template: |
+  제공된 문서를 사용하여 다음 질문에 답변하세요.
+
+  질문: {query}
+
+  문서:
+  {paragraphs}
+
+  문서의 정보를 바탕으로 간결하고 직접적인 답변을 제공하세요.
+
+  답변:

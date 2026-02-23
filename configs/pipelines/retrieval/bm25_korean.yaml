@@ -1,0 +1,18 @@
+# BM25 Korean Retrieval Pipeline Configuration
+#
+# Uses VectorChord-BM25 with bert-base-multilingual-cased tokenizer
+# for proper Korean morphological tokenization.
+#
+# Parameters:
+#   tokenizer: "bert_multilingual" for Korean/multilingual text
+#   top_k: Number of results to retrieve (default: 10)
+#
+_target_: autorag_research.pipelines.retrieval.bm25.BM25PipelineConfig
+description: "BM25 retrieval with multilingual BERT tokenizer (Korean)"
+name: bm25_korean
+tokenizer: bert_multilingual
+top_k: 10
+batch_size: 128
+max_concurrency: 16
+max_retries: 3
+retry_delay: 1.0

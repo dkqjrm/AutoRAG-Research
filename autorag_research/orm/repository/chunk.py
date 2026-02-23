@@ -230,3 +230,58 @@ class ChunkRepository(BaseVectorRepository[Any], BaseEmbeddingRepository[Any]):
             key=lambda x: x[1],
             reverse=True,
         )
+
+    def grep_search(self, keywords: list[str], limit: int = 10) -> list[tuple[Any, float]]:
+        """Search chunks by multiple keywords using ILIKE, scored by match count.
+
+        Args:
+            keywords: List of keywords to search for.
+            limit: Maximum number of results to return.
+
+        Returns:
+            List of (chunk, score) tuples, sorted by score descending.
+            Score is normalized to [0, 1] range (match_count / total_keywords).
+        """
+        if not keywords:
+            return []
+
+        table_name = self.model_cls.__tablename__
+
+        # Build CASE statements for counting matches
+        case_statements = []
+        where_conditions = []
+        for i, _keyword in enumerate(keywords):
+            case_statements.append(f"CASE WHEN contents ILIKE :keyword_{i} THEN 1 ELSE 0 END")
+            where_conditions.append(f"contents ILIKE :keyword_{i}")
+
+        # Construct SQL query
+        sql = text(f"""
+            SELECT id,
+                   ({" + ".join(case_statements)})::float / :total_keywords AS match_score
+            FROM {table_name}
+            WHERE {" OR ".join(where_conditions)}
+            ORDER BY match_score DESC
+            LIMIT :limit
+        """)  # noqa: S608
+
+        # Build parameters dict
+        params = {f"keyword_{i}": f"%{keyword}%" for i, keyword in enumerate(keywords)}
+        params["total_keywords"] = len(keywords)
+        params["limit"] = limit
+
+        result = self.session.execute(sql, params)
+        rows = result.fetchall()
+
+        # Build id -> score mapping
+        id_to_score = {row[0]: float(row[1]) for row in rows}
+
+        # Fetch all entities in single query
+        entities = self.get_by_ids(list(id_to_score.keys()))
+        id_to_entity = {entity.id: entity for entity in entities}
+
+        # Return entities with scores, sorted by score descending
+        return sorted(
+            [(id_to_entity[eid], score) for eid, score in id_to_score.items() if eid in id_to_entity],
+            key=lambda x: x[1],
+            reverse=True,
+        )

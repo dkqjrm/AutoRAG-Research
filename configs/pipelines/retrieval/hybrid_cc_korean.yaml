@@ -1,0 +1,17 @@
+# Hybrid CC Korean Retrieval Pipeline Configuration
+#
+# Fuses vector search (bge-m3) + BM25 Korean (bert_multilingual) using Convex Combination.
+#
+_target_: autorag_research.pipelines.retrieval.hybrid.HybridCCRetrievalPipelineConfig
+description: "Hybrid CC with Korean BM25 + Dense (bge-m3)"
+name: hybrid_cc_korean
+retrieval_pipeline_1_name: vector_search
+retrieval_pipeline_2_name: bm25_korean
+weight: 0.5
+normalize_method: mm
+fetch_k_multiplier: 2
+top_k: 10
+batch_size: 128
+max_concurrency: 16
+max_retries: 3
+retry_delay: 1.0

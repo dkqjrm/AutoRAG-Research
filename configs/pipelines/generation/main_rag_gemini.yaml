@@ -1,0 +1,48 @@
+# MAIN-RAG with Gemini 2.5 Flash
+#
+# Multi-Agent Filtering RAG (ACL 2025).
+# Three LLM agents collaborate to filter noisy documents:
+# Agent-1 (Predictor) → Agent-2 (Judge) → Agent-3 (Final Predictor)
+#
+_target_: autorag_research.pipelines.generation.main_rag.MAINRAGPipelineConfig
+description: "MAIN-RAG with Gemini 2.5 Flash + Dense retrieval"
+name: main_rag_gemini
+retrieval_pipeline_name: vector_search
+llm: google-gemini-2.5-flash
+std_multiplier: 0.0
+top_k: 10
+batch_size: 5
+max_concurrency: 4
+max_retries: 3
+retry_delay: 1.0
+predictor_system_prompt: |
+  당신은 외부 문서를 활용하여 질문에 정확하고 신뢰성 있게 답변하는 AI 어시스턴트입니다.
+  질문과 지시를 반복하지 말고 정확한 답변만 제공하세요.
+predictor_user_prompt: |
+  문서:
+  {document}
+
+  질문: {query}
+judge_system_prompt: |
+  당신은 노이즈 문서 평가자입니다. 검색된 문서가 질문과 무관하거나 오해를 유발하는 노이즈 정보를 포함하는지 판단합니다.
+  다음 두 조건이 모두 충족되는지 판단하세요:
+  (1) 문서가 질문에 답변하기 위한 구체적인 정보를 제공하는가
+  (2) LLM 답변이 문서를 기반으로 질문에 직접적으로 답변하는가
+  "Yes" 또는 "No"로만 답변하세요.
+judge_user_prompt: |
+  문서:
+  {document}
+
+  질문: {query}
+
+  답변: {answer}
+
+  이 문서가 질문에 정확하게 답변하기 위한 관련 정보를 제공합니까? "Yes" 또는 "No"로만 답변하세요.
+final_predictor_system_prompt: |
+  당신은 외부 문서를 활용하여 질문에 정확하고 신뢰성 있게 답변하는 AI 어시스턴트입니다.
+  질문과 지시를 반복하지 말고 정확한 답변만 제공하세요.
+final_predictor_user_prompt: |
+  문서:
+  {documents}
+
+  질문: {query}

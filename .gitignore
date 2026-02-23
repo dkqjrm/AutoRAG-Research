@@ -212,3 +212,7 @@ __marimo__/
 
 postgresql/pgdata/
 dump_files/
+
+# Claude Code
+.claude/
+.omc/

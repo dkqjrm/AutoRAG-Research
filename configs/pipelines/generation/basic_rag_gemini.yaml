@@ -1,0 +1,24 @@
+# BasicRAG with Gemini 2.5 Flash
+#
+# Simple retrieve-then-generate using the best retrieval method (vector_search/bge-m3).
+#
+_target_: autorag_research.pipelines.generation.basic_rag.BasicRAGPipelineConfig
+description: "BasicRAG with Gemini 2.5 Flash + Dense retrieval"
+name: basic_rag_gemini
+retrieval_pipeline_name: vector_search
+llm: google-gemini-2.5-flash
+top_k: 10
+batch_size: 10
+max_concurrency: 8
+max_retries: 3
+retry_delay: 1.0
+prompt_template: |
+  당신은 제공된 맥락을 기반으로 질문에 답변하는 AI 어시스턴트입니다.
+
+  맥락:
+  {context}
+
+  질문:
+  {query}
+
+  답변:

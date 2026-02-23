@@ -1,0 +1,10 @@
+_target_: autorag_research.pipelines.retrieval.grep_rag.GrepRAGPipelineConfig
+description: "GrepRAG with Gemini 2.5 Flash (keyword-based text search)"
+name: grep_rag_gemini
+llm: google-gemini-2.5-flash
+max_keywords: 10
+top_k: 10
+batch_size: 10
+max_concurrency: 8
+max_retries: 3
+retry_delay: 1.0

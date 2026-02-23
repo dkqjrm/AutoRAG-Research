@@ -1,0 +1,8 @@
+# Google Gemini 2.5 Flash via Google GenAI (supports Vertex AI service account)
+# pip install langchain-google-genai
+# Requires GOOGLE_APPLICATION_CREDENTIALS env var pointing to service account JSON
+_target_: langchain_google_genai.ChatGoogleGenerativeAI
+model: gemini-2.5-flash
+project: ${oc.env:GOOGLE_CLOUD_PROJECT,est-perso-vt}
+temperature: 0
+max_retries: 3

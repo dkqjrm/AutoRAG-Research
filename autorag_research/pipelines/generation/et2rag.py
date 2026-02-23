@@ -478,7 +478,7 @@ class ET2RAGPipeline(BaseGenerationPipeline):
         # Configure generation parameters
         kwargs: dict[str, Any] = {}
         if max_tokens is not None:
-            kwargs["max_tokens"] = max_tokens
+            kwargs["max_output_tokens"] = max_tokens
 
         response = await self._llm.ainvoke(prompt, **kwargs)
         text = response.content if hasattr(response, "content") else str(response)
@@ -502,7 +502,7 @@ class ET2RAGPipeline(BaseGenerationPipeline):
 
         kwargs: dict[str, Any] = {}
         if self._full_generation_max_tokens is not None:
-            kwargs["max_tokens"] = self._full_generation_max_tokens
+            kwargs["max_output_tokens"] = self._full_generation_max_tokens
 
         response = await self._llm.ainvoke(prompt, **kwargs)
         text = response.content if hasattr(response, "content") else str(response)

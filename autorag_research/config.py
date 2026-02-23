@@ -73,6 +73,9 @@ class BasePipelineConfig(ABC):
     max_concurrency: int = 16
     max_retries: int = 3
     retry_delay: float = 1.0
+    skip_verification: bool = False
+    """Skip result verification after pipeline execution. Useful for keyword-based
+    pipelines where some queries may legitimately return zero results."""
 
     @abstractmethod
     def get_pipeline_class(self) -> type["BaseRetrievalPipeline"]:

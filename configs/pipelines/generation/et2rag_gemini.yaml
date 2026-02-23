@@ -1,0 +1,30 @@
+# ET2RAG with Gemini 2.5 Flash
+#
+# Efficient Test-Time RAG: majority voting on context subsets.
+# Creates multiple context subsets, generates partial responses,
+# uses semantic similarity voting to select the best subset.
+#
+_target_: autorag_research.pipelines.generation.et2rag.ET2RAGPipelineConfig
+description: "ET2RAG with Gemini 2.5 Flash + Dense retrieval"
+name: et2rag_gemini
+retrieval_pipeline_name: vector_search
+llm: google-gemini-2.5-flash
+embedding_model: huggingface
+organization_strategy: qa
+num_subsets: null
+partial_generation_max_tokens: 100
+full_generation_max_tokens: null
+top_k: 10
+batch_size: 5
+max_concurrency: 4
+max_retries: 3
+retry_delay: 1.0
+prompt_template: |
+  제공된 맥락을 기반으로 다음 질문에 답변하세요.
+
+  맥락:
+  {context}
+
+  질문: {query}
+
+  답변:
