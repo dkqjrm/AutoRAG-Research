@@ -1,0 +1,23 @@
+# Oliveyoung product search experiment
+# Tests retrieval pipelines on Korean product names with typo queries
+
+db_name: oliveyoung_bge_m3
+
+max_retries: 3
+eval_batch_size: 100
+
+pipelines:
+  retrieval:
+    - vector_search           # Pure dense vector retrieval (bge-m3)
+    - bm25_korean             # BM25 sparse retrieval (Korean tokenizer)
+    - hybrid_rrf_korean       # Hybrid BM25 + Vector with RRF fusion
+    - hybrid_cc_korean        # Hybrid BM25 + Vector with convex combination
+    - query_decomposition_gemini  # Query decomposition into sub-queries + RRF
+    - step_back_gemini        # Step-back prompting: abstract query + RRF
+
+metrics:
+  retrieval:
+    - recall
+    - ndcg
+    - mrr
+    - map

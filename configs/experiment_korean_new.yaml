@@ -1,0 +1,19 @@
+# Korean experiment: new pipelines only (query_decomposition + step_back)
+# Run against mrtydi_korean_full DB
+
+db_name: mrtydi_korean_full
+
+max_retries: 3
+eval_batch_size: 100
+
+pipelines:
+  retrieval:
+    - query_decomposition_gemini  # Query decomposition into sub-queries + RRF
+    - step_back_gemini            # Step-back prompting: abstract query + RRF
+
+metrics:
+  retrieval:
+    - recall
+    - ndcg
+    - mrr
+    - map

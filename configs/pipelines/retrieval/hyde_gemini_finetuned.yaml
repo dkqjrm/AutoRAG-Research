@@ -1,0 +1,18 @@
+# HyDE with Gemini 2.5 Flash + fine-tuned bge-m3
+#
+# Generates hypothetical documents using Gemini, then embeds with fine-tuned bge-m3 for vector search.
+#
+_target_: autorag_research.pipelines.retrieval.hyde.HyDEPipelineConfig
+description: "HyDE retrieval with Gemini 2.5 Flash + fine-tuned bge-m3"
+name: hyde_gemini_finetuned
+llm: google-gemini-2.5-flash
+embedding: oliveyoung-bge-m3
+prompt_template: |
+  다음 질문에 대한 답변이 될 수 있는 한국어 문서를 작성해주세요.
+  질문: {query}
+  문서:
+top_k: 10
+batch_size: 10
+max_concurrency: 8
+max_retries: 3
+retry_delay: 1.0

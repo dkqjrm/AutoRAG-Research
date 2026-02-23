@@ -1,0 +1,4 @@
+# Oliveyoung fine-tuned BGE-M3 Embeddings (sentence-transformers)
+# Model: dkqjrm/augmented-olive-product-phonetic-sentence-wo-negative-v2-bge-m3
+_target_: langchain_huggingface.HuggingFaceEmbeddings
+model_name: dkqjrm/augmented-olive-product-phonetic-sentence-wo-negative-v2-bge-m3

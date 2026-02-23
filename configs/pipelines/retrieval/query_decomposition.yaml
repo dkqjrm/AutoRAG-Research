@@ -1,0 +1,11 @@
+_target_: autorag_research.pipelines.retrieval.query_decomposition.QueryDecompositionPipelineConfig
+description: "Query decomposition with sub-query retrieval and RRF fusion"
+name: query_decomposition
+llm: mock
+embedding: mock
+max_sub_queries: 4
+top_k: 10
+batch_size: 128
+max_concurrency: 16
+max_retries: 3
+retry_delay: 1.0

@@ -1,0 +1,12 @@
+_target_: autorag_research.pipelines.retrieval.reranker.RerankerPipelineConfig
+description: "Reranker with Gemini + fine-tuned bge-m3 initial retrieval"
+name: reranker_gemini_finetuned
+llm: google-gemini-2.5-flash
+embedding: oliveyoung-bge-m3
+reranker: jina
+initial_top_k: 50
+top_k: 10
+batch_size: 10
+max_concurrency: 8
+max_retries: 3
+retry_delay: 1.0

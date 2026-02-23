@@ -1,0 +1,26 @@
+# English experiment on BEIR scifact dataset
+# Uses standard (non-Korean) pipelines with Gemini LLM variants
+
+db_name: scifact_bge_m3
+
+max_retries: 3
+eval_batch_size: 100
+
+pipelines:
+  retrieval:
+    - vector_search           # Pure dense vector retrieval (bge-m3)
+    - bm25                    # BM25 sparse retrieval (default tokenizer)
+    - hybrid_rrf              # Hybrid BM25 + Vector with RRF fusion
+    - hybrid_cc               # Hybrid BM25 + Vector with convex combination
+    - hyde_gemini             # HyDE: hypothetical document embeddings
+    - rag_fusion_gemini       # RAG-Fusion: multi-query variations + RRF
+    - grep_rag_gemini         # GrepRAG: LLM keyword extraction + ripgrep
+    - query_decomposition_gemini  # Query decomposition into sub-queries + RRF
+    - step_back_gemini        # Step-back prompting: abstract query + RRF
+
+metrics:
+  retrieval:
+    - recall
+    - ndcg
+    - mrr
+    - map

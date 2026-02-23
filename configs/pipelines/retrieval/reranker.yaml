@@ -1,0 +1,25 @@
+# Reranker Retrieval Pipeline Configuration
+#
+# Two-stage retrieval: vector search followed by cross-encoder reranking.
+# Stage 1: Embed query and retrieve initial_top_k candidates via vector search.
+# Stage 2: Rerank candidates with a cross-encoder model and return top_k results.
+#
+# Parameters:
+#   embedding: Embedding config name from configs/embedding/ (e.g., "mock", "huggingface")
+#   reranker: Reranker class name (e.g., "SentenceTransformerReranker")
+#   reranker_model_name: HuggingFace model name for the reranker
+#   initial_top_k: Number of candidates to fetch in stage 1 (default: 50)
+#   top_k: Number of results to return after reranking (default: 10)
+#
+_target_: autorag_research.pipelines.retrieval.reranker.RerankerPipelineConfig
+description: "Two-stage retrieval: vector search + cross-encoder reranking"
+name: reranker
+embedding: mock
+reranker: SentenceTransformerReranker
+reranker_model_name: "BAAI/bge-reranker-v2-m3"
+initial_top_k: 50
+top_k: 10
+batch_size: 128
+max_concurrency: 16
+max_retries: 3
+retry_delay: 1.0

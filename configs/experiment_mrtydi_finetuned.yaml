@@ -1,0 +1,26 @@
+# MrTyDi Korean + fine-tuned bge-m3
+# Full retrieval benchmark with all pipeline methods
+
+db_name: mrtydi_korean_finetuned
+
+max_retries: 3
+eval_batch_size: 100
+
+pipelines:
+  retrieval:
+    - vector_search
+    - bm25
+    - hybrid_rrf
+    - hybrid_cc
+    - hyde_gemini_finetuned
+    - rag_fusion_gemini_finetuned
+    - grep_rag_gemini
+    - query_decomposition_gemini_finetuned
+    - step_back_gemini_finetuned
+
+metrics:
+  retrieval:
+    - recall
+    - ndcg
+    - mrr
+    - map

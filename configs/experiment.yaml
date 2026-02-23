@@ -21,7 +21,15 @@ eval_batch_size: 100
 # YAML key = folder path under configs/pipelines/
 pipelines:
   retrieval:
-    - rag_fusion_gemini  # RAG-Fusion: multi-query variations + RRF
+    - vector_search           # Pure dense vector retrieval (bge-m3)
+    - bm25_korean             # BM25 sparse retrieval (Korean tokenizer)
+    - hybrid_rrf_korean       # Hybrid BM25 + Vector with RRF fusion
+    - hybrid_cc_korean        # Hybrid BM25 + Vector with convex combination
+    - hyde_gemini             # HyDE: hypothetical document embeddings
+    - rag_fusion_gemini       # RAG-Fusion: multi-query variations + RRF
+    - grep_rag_gemini         # GrepRAG: LLM keyword extraction + ripgrep
+    - query_decomposition_gemini  # Query decomposition into sub-queries + RRF
+    - step_back_gemini        # Step-back prompting: abstract query + RRF
 
 # Metric configurations
 # YAML key = folder path under configs/metrics/

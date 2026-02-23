@@ -1,0 +1,18 @@
+# Reranker Retrieval Pipeline with bge-m3 embeddings
+#
+# Two-stage retrieval: bge-m3 vector search followed by cross-encoder reranking.
+# Stage 1: Embed query with bge-m3 (huggingface) and retrieve initial_top_k candidates.
+# Stage 2: Rerank candidates with a cross-encoder model and return top_k results.
+#
+_target_: autorag_research.pipelines.retrieval.reranker.RerankerPipelineConfig
+description: "Two-stage retrieval: bge-m3 vector search + cross-encoder reranking"
+name: reranker_gemini
+embedding: huggingface
+reranker: SentenceTransformerReranker
+reranker_model_name: "BAAI/bge-reranker-v2-m3"
+initial_top_k: 50
+top_k: 10
+batch_size: 128
+max_concurrency: 16
+max_retries: 3
+retry_delay: 1.0
