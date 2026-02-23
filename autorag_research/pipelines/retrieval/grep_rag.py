@@ -234,7 +234,14 @@ class GrepRAGRetrievalPipeline(BaseRetrievalPipeline):
         for keyword in keywords:
             try:
                 result = subprocess.run(  # noqa: S603
-                    [RG_BINARY, "--files-with-matches", "--ignore-case", "--fixed-strings", keyword, str(self._chunks_dir)],
+                    [
+                        RG_BINARY,
+                        "--files-with-matches",
+                        "--ignore-case",
+                        "--fixed-strings",
+                        keyword,
+                        str(self._chunks_dir),
+                    ],
                     capture_output=True,
                     text=True,
                     timeout=30,

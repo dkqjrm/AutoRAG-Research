@@ -1,16 +1,12 @@
-"""RAG-Fusion Retrieval Pipeline for AutoRAG-Research.
+"""Query Decomposition Retrieval Pipeline for AutoRAG-Research.
 
-Implements the RAG-Fusion approach which generates multiple query variations
-using an LLM, performs vector search for each variation, and combines results
-using Reciprocal Rank Fusion (RRF).
+This pipeline implements a query decomposition approach for retrieval:
+1. Using an LLM to break a complex query into simpler sub-queries
+2. Embedding each sub-query separately
+3. Performing vector similarity search for each sub-query
+4. Merging results using Reciprocal Rank Fusion (RRF)
 
-RAG-Fusion works by:
-1. Using an LLM to generate N diverse query variations from the original query
-2. Embedding each query variation
-3. Performing vector search for each embedding
-4. Fusing all result lists using RRF to produce the final ranking
-
-Reference: "RAG-Fusion: a New Take on Retrieval-Augmented Generation"
+This approach improves recall for complex multi-faceted queries.
 """
 
 import logging
@@ -27,19 +23,19 @@ from autorag_research.pipelines.retrieval.base import BaseRetrievalPipeline
 
 logger = logging.getLogger("AutoRAG-Research")
 
-DEFAULT_RAG_FUSION_PROMPT_TEMPLATE_KOREAN = """다음 질문에 대해 서로 다른 관점의 검색 쿼리를 {num_queries}개 생성하세요.
-각 쿼리는 원래 질문의 다른 측면이나 표현을 다뤄야 합니다.
-줄바꿈으로 구분하여 쿼리만 출력하세요.
+DEFAULT_QUERY_DECOMPOSITION_PROMPT_TEMPLATE_KOREAN = """다음 질문을 검색에 적합한 더 간단한 하위 질문들로 분해하세요.
+각 하위 질문은 원래 질문의 서로 다른 측면을 다뤄야 합니다.
+줄바꿈으로 구분하여 하위 질문만 출력하세요. 최대 {max_sub_queries}개까지 생성하세요.
 
 원래 질문: {query}
-쿼리:"""
+하위 질문:"""
 
-DEFAULT_RAG_FUSION_PROMPT_TEMPLATE = """Generate {num_queries} different search queries related to the following question.
-Each query should explore a different aspect or phrasing of the original question.
-Output only the queries, one per line.
+DEFAULT_QUERY_DECOMPOSITION_PROMPT_TEMPLATE = """Decompose the following question into simpler sub-questions suitable for search.
+Each sub-question should address a different aspect of the original question.
+Output only the sub-questions, one per line. Generate at most {max_sub_queries} sub-questions.
 
 Original question: {query}
-Queries:"""
+Sub-questions:"""
 
 
 def _multi_rrf_fuse(
@@ -59,7 +55,7 @@ def _multi_rrf_fuse(
         result_lists: List of result lists, each with 'doc_id' and 'score' keys.
         k: RRF constant (typically 60).
         top_k: Number of results to return.
-        fetch_k: Number of results fetched per query variation.
+        fetch_k: Number of results fetched per sub-query.
 
     Returns:
         Fused results sorted by RRF score (descending).
@@ -95,42 +91,42 @@ def _multi_rrf_fuse(
 
 
 @dataclass(kw_only=True)
-class RAGFusionPipelineConfig(BaseRetrievalPipelineConfig):
-    """Configuration for RAG-Fusion retrieval pipeline.
+class QueryDecompositionPipelineConfig(BaseRetrievalPipelineConfig):
+    """Configuration for Query Decomposition retrieval pipeline.
 
     Attributes:
         name: Unique name for this pipeline instance.
-        llm: LLM config name or instance for generating query variations.
-        embedding: Embedding config name or instance for embedding queries.
-        prompt_template: Template with {query} and {num_queries} placeholders.
-        num_queries: Number of query variations to generate (default: 4).
+        llm: LLM config name or instance for decomposing queries.
+        embedding: Embedding config name or instance for embedding sub-queries.
+        prompt_template: Template with {query} and {max_sub_queries} placeholders.
+        max_sub_queries: Maximum number of sub-queries to generate (default: 4).
         rrf_k: RRF constant (default: 60).
         top_k: Number of results to retrieve per query.
         batch_size: Number of queries to process in each batch.
 
     Example:
         ```python
-        config = RAGFusionPipelineConfig(
-            name="rag_fusion_gemini",
+        config = QueryDecompositionPipelineConfig(
+            name="query_decomposition_gemini",
             llm="google-gemini-2.5-flash",
-            embedding="bge-m3",
-            num_queries=4,
+            embedding="huggingface",
+            max_sub_queries=4,
             top_k=10,
         )
         ```
     """
 
     llm: str | BaseLanguageModel
-    """LLM for generating query variations. Can be config name or instance."""
+    """LLM for decomposing queries into sub-queries. Can be config name or instance."""
 
     embedding: str | Embeddings
-    """Embedding model for query variations. Can be config name or instance."""
+    """Embedding model for sub-queries. Can be config name or instance."""
 
-    prompt_template: str = field(default=DEFAULT_RAG_FUSION_PROMPT_TEMPLATE_KOREAN)
-    """Template with {query} and {num_queries} placeholders."""
+    prompt_template: str = field(default=DEFAULT_QUERY_DECOMPOSITION_PROMPT_TEMPLATE_KOREAN)
+    """Template with {query} and {max_sub_queries} placeholders."""
 
-    num_queries: int = 4
-    """Number of query variations to generate."""
+    max_sub_queries: int = 4
+    """Maximum number of sub-queries to generate."""
 
     rrf_k: int = 60
     """RRF constant. Higher values give more weight to top ranks."""
@@ -149,45 +145,45 @@ class RAGFusionPipelineConfig(BaseRetrievalPipelineConfig):
             health_check_embedding(value)
         super().__setattr__(name, value)
 
-    def get_pipeline_class(self) -> type["RAGFusionRetrievalPipeline"]:
-        """Return the RAGFusionRetrievalPipeline class."""
-        return RAGFusionRetrievalPipeline
+    def get_pipeline_class(self) -> type["QueryDecompositionRetrievalPipeline"]:
+        """Return the QueryDecompositionRetrievalPipeline class."""
+        return QueryDecompositionRetrievalPipeline
 
     def get_pipeline_kwargs(self) -> dict[str, Any]:
-        """Return kwargs for RAGFusionRetrievalPipeline constructor."""
+        """Return kwargs for QueryDecompositionRetrievalPipeline constructor."""
         return {
             "llm": self.llm,
             "embedding": self.embedding,
             "prompt_template": self.prompt_template,
-            "num_queries": self.num_queries,
+            "max_sub_queries": self.max_sub_queries,
             "rrf_k": self.rrf_k,
         }
 
 
-class RAGFusionRetrievalPipeline(BaseRetrievalPipeline):
-    """Pipeline for RAG-Fusion retrieval.
+class QueryDecompositionRetrievalPipeline(BaseRetrievalPipeline):
+    """Pipeline for Query Decomposition retrieval.
 
-    This pipeline generates multiple query variations using an LLM, embeds each
-    variation, performs vector search for each, and fuses results using RRF.
-    This approach increases recall by exploring different aspects of the query.
-
-    Reference: "RAG-Fusion: a New Take on Retrieval-Augmented Generation"
+    This pipeline decomposes complex queries into simpler sub-queries using an LLM,
+    embeds each sub-query, performs vector search for each, and fuses results using RRF.
+    This approach improves recall for complex multi-faceted queries.
 
     Example:
         ```python
         from langchain_google_genai import ChatGoogleGenerativeAI
         from autorag_research.orm.connection import DBConnection
-        from autorag_research.pipelines.retrieval.rag_fusion import RAGFusionRetrievalPipeline
+        from autorag_research.pipelines.retrieval.query_decomposition import (
+            QueryDecompositionRetrievalPipeline,
+        )
 
         db = DBConnection.from_config()
         session_factory = db.get_session_factory()
 
-        pipeline = RAGFusionRetrievalPipeline(
+        pipeline = QueryDecompositionRetrievalPipeline(
             session_factory=session_factory,
-            name="rag_fusion_gemini",
+            name="query_decomposition_gemini",
             llm=ChatGoogleGenerativeAI(model="gemini-2.5-flash"),
-            embedding=load_embedding_model("bge-m3"),
-            num_queries=4,
+            embedding=load_embedding_model("huggingface"),
+            max_sub_queries=4,
         )
 
         # Single query retrieval
@@ -204,77 +200,86 @@ class RAGFusionRetrievalPipeline(BaseRetrievalPipeline):
         name: str,
         llm: BaseLanguageModel,
         embedding: Embeddings,
-        prompt_template: str = DEFAULT_RAG_FUSION_PROMPT_TEMPLATE_KOREAN,
-        num_queries: int = 4,
+        prompt_template: str = DEFAULT_QUERY_DECOMPOSITION_PROMPT_TEMPLATE_KOREAN,
+        max_sub_queries: int = 4,
         rrf_k: int = 60,
         schema: Any | None = None,
     ):
-        """Initialize RAG-Fusion retrieval pipeline.
+        """Initialize Query Decomposition retrieval pipeline.
 
         Args:
             session_factory: SQLAlchemy sessionmaker for database connections.
             name: Name for this pipeline.
-            llm: LangChain LLM for generating query variations.
-            embedding: LangChain embeddings model for embedding query variations.
-            prompt_template: Template with {query} and {num_queries} placeholders.
-            num_queries: Number of query variations to generate (default: 4).
+            llm: LangChain LLM for decomposing queries into sub-queries.
+            embedding: LangChain embeddings model for embedding sub-queries.
+            prompt_template: Template with {query} and {max_sub_queries} placeholders.
+            max_sub_queries: Maximum number of sub-queries to generate (default: 4).
             rrf_k: RRF constant (default: 60).
             schema: Schema namespace from create_schema(). If None, uses default schema.
         """
+        # Store parameters BEFORE calling super().__init__
+        # because _get_pipeline_config() is called in super().__init__
         self.llm = llm
         self.embedding = embedding
         if "{query}" not in prompt_template:
             msg = "prompt_template must contain '{query}' placeholder"
             raise ValueError(msg)
         self.prompt_template = prompt_template
-        self.num_queries = num_queries
+        self.max_sub_queries = max_sub_queries
         self.rrf_k = rrf_k
 
         super().__init__(session_factory, name, schema)
 
     def _get_pipeline_config(self) -> dict[str, Any]:
-        """Return RAG-Fusion pipeline configuration."""
+        """Return Query Decomposition pipeline configuration."""
         return {
-            "type": "rag_fusion",
-            "num_queries": self.num_queries,
+            "type": "query_decomposition",
+            "max_sub_queries": self.max_sub_queries,
             "rrf_k": self.rrf_k,
             "prompt_template": self.prompt_template,
         }
 
-    async def _generate_query_variations(self, query_text: str) -> list[str]:
-        """Generate diverse query variations using the LLM.
+    async def _decompose_query(self, query_text: str) -> list[str]:
+        """Decompose a complex query into simpler sub-queries using the LLM.
 
         Args:
             query_text: The original query text.
 
         Returns:
-            List of query variations (including the original query).
+            List of sub-query strings.
         """
-        prompt = self.prompt_template.format(query=query_text, num_queries=self.num_queries)
+        prompt = self.prompt_template.format(query=query_text, max_sub_queries=self.max_sub_queries)
         response = await self.llm.ainvoke(prompt)
         response_text = self._extract_response_content(response)
 
-        # Parse one query per line
-        variations = [line.strip() for line in response_text.strip().split("\n") if line.strip()]
+        # Parse one sub-query per line
+        sub_queries = [line.strip() for line in response_text.strip().split("\n") if line.strip()]
         # Remove numbering prefixes like "1. " or "1) "
         cleaned = []
-        for v in variations:
+        for q in sub_queries:
             for prefix in ("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "1)", "2)", "3)", "4)", "5)"):
-                if v.startswith(prefix):
-                    v = v[len(prefix) :].strip()
+                if q.startswith(prefix):
+                    q = q[len(prefix):].strip()
                     break
-            if v:
-                cleaned.append(v)
+            if q:
+                cleaned.append(q)
 
-        # Limit to num_queries and always include the original
-        cleaned = cleaned[: self.num_queries]
+        # Limit to max_sub_queries
+        cleaned = cleaned[: self.max_sub_queries]
 
-        logger.debug(f"Generated {len(cleaned)} query variations: {cleaned}")
-        return [query_text, *cleaned]
+        logger.debug(f"Decomposed query into {len(cleaned)} sub-queries: {cleaned}")
+        return cleaned
 
     @staticmethod
     def _extract_response_content(response: Any) -> str:
-        """Extract text content from LLM response."""
+        """Extract text content from LLM response.
+
+        Args:
+            response: LLM response (AIMessage or string).
+
+        Returns:
+            Extracted text content.
+        """
         if hasattr(response, "content"):
             return str(response.content)
         return str(response)
@@ -299,7 +304,7 @@ class RAGFusionRetrievalPipeline(BaseRetrievalPipeline):
     async def _retrieve_by_text(self, query_text: str, top_k: int) -> list[dict[str, Any]]:
         """Retrieve documents using raw query text.
 
-        Generates query variations, embeds each, searches, and fuses with RRF.
+        Decomposes query into sub-queries, embeds each, searches, and fuses with RRF.
 
         Args:
             query_text: The query text to retrieve for.
@@ -308,15 +313,19 @@ class RAGFusionRetrievalPipeline(BaseRetrievalPipeline):
         Returns:
             List of result dicts with doc_id and score.
         """
-        # Step 1: Generate query variations
-        variations = await self._generate_query_variations(query_text)
+        # Step 1: Decompose query into sub-queries
+        sub_queries = await self._decompose_query(query_text)
 
-        # Step 2: Embed each variation and search
+        if not sub_queries:
+            # Fall back to original query if decomposition yields nothing
+            sub_queries = [query_text]
+
+        # Step 2: Embed each sub-query and search
         fetch_k = top_k * 2  # Fetch more to improve RRF fusion quality
         result_lists: list[list[dict[str, Any]]] = []
 
-        for variation in variations:
-            embedding = await self.embedding.aembed_query(variation)
+        for sub_query in sub_queries:
+            embedding = await self.embedding.aembed_query(sub_query)
             results = self._service.vector_search_by_embedding(
                 embedding=embedding,
                 top_k=fetch_k,
@@ -328,8 +337,8 @@ class RAGFusionRetrievalPipeline(BaseRetrievalPipeline):
 
 
 __all__ = [
-    "DEFAULT_RAG_FUSION_PROMPT_TEMPLATE",
-    "DEFAULT_RAG_FUSION_PROMPT_TEMPLATE_KOREAN",
-    "RAGFusionPipelineConfig",
-    "RAGFusionRetrievalPipeline",
+    "DEFAULT_QUERY_DECOMPOSITION_PROMPT_TEMPLATE",
+    "DEFAULT_QUERY_DECOMPOSITION_PROMPT_TEMPLATE_KOREAN",
+    "QueryDecompositionPipelineConfig",
+    "QueryDecompositionRetrievalPipeline",
 ]
