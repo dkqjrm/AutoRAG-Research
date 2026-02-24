@@ -1,4 +1,8 @@
 # HuggingFace Embeddings (local, uses sentence-transformers)
 # pip install langchain-huggingface sentence-transformers
+# WARNING: MPS (Apple Silicon) corrupts bge-m3 embeddings — cosine ~0.21 vs ~0.82 on CPU.
+# Use EMBEDDING_DEVICE=cuda on GPU servers, defaults to cpu (safe fallback).
 _target_: langchain_huggingface.HuggingFaceEmbeddings
 model_name: ${oc.env:HF_EMBEDDING_MODEL,BAAI/bge-m3}
+model_kwargs:
+  device: ${oc.env:EMBEDDING_DEVICE,cpu}

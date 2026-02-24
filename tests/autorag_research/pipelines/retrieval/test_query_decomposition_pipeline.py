@@ -155,9 +155,7 @@ class TestQueryDecompositionRetrievalPipeline:
     ):
         """Test that LLM generates sub-queries parsed line-by-line."""
         llm = MagicMock()
-        llm.ainvoke = AsyncMock(
-            return_value=MagicMock(content="Sub question 1\nSub question 2\nSub question 3")
-        )
+        llm.ainvoke = AsyncMock(return_value=MagicMock(content="Sub question 1\nSub question 2\nSub question 3"))
 
         pipeline = QueryDecompositionRetrievalPipeline(
             session_factory=session_factory,
@@ -183,9 +181,7 @@ class TestQueryDecompositionRetrievalPipeline:
     ):
         """Test single query retrieval via retrieve() method with mocked vector search."""
         llm = MagicMock()
-        llm.ainvoke = AsyncMock(
-            return_value=MagicMock(content="Sub question 1\nSub question 2")
-        )
+        llm.ainvoke = AsyncMock(return_value=MagicMock(content="Sub question 1\nSub question 2"))
 
         mock_result = [
             {"doc_id": 1, "score": 0.9, "content": "Content 1"},
@@ -229,9 +225,7 @@ class TestQueryDecompositionRetrievalPipeline:
             session.close()
 
         llm = MagicMock()
-        llm.ainvoke = AsyncMock(
-            return_value=MagicMock(content="Sub question 1\nSub question 2\nSub question 3")
-        )
+        llm.ainvoke = AsyncMock(return_value=MagicMock(content="Sub question 1\nSub question 2\nSub question 3"))
 
         mock_result = [
             {"doc_id": 1, "score": 0.9, "content": "Content 1"},

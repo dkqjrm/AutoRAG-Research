@@ -259,7 +259,7 @@ class QueryDecompositionRetrievalPipeline(BaseRetrievalPipeline):
         for q in sub_queries:
             for prefix in ("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.", "1)", "2)", "3)", "4)", "5)"):
                 if q.startswith(prefix):
-                    q = q[len(prefix):].strip()
+                    q = q[len(prefix) :].strip()
                     break
             if q:
                 cleaned.append(q)

@@ -72,9 +72,7 @@ class RerankerPipelineConfig(BaseRetrievalPipelineConfig):
             import importlib
 
             reranker_model_name = (
-                self.reranker_model_name
-                if hasattr(self, "reranker_model_name")
-                else "BAAI/bge-reranker-v2-m3"
+                self.reranker_model_name if hasattr(self, "reranker_model_name") else "BAAI/bge-reranker-v2-m3"
             )
             rerankers_module = importlib.import_module("autorag_research.rerankers")
             reranker_cls = getattr(rerankers_module, value)
@@ -226,10 +224,7 @@ class RerankerRetrievalPipeline(BaseRetrievalPipeline):
         )
 
         # Map reranked results back to original doc_ids
-        return [
-            {"doc_id": doc_ids[result.index], "score": result.score}
-            for result in reranked
-        ]
+        return [{"doc_id": doc_ids[result.index], "score": result.score} for result in reranked]
 
 
 __all__ = ["RerankerPipelineConfig", "RerankerRetrievalPipeline"]

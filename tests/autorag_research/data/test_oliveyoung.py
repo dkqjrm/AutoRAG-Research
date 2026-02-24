@@ -16,9 +16,20 @@ def products_csv(tmp_path):
         writer = csv.DictWriter(
             f,
             fieldnames=[
-                "goodsNo", "Brand", "Name", "Sale Price", "Original Price",
-                "L1", "L2", "L3_Sample", "Categories", "Category Count",
-                "Image URL", "Main Image Path", "Product URL", "Category URL",
+                "goodsNo",
+                "Brand",
+                "Name",
+                "Sale Price",
+                "Original Price",
+                "L1",
+                "L2",
+                "L3_Sample",
+                "Categories",
+                "Category Count",
+                "Image URL",
+                "Main Image Path",
+                "Product URL",
+                "Category URL",
             ],
         )
         writer.writeheader()
