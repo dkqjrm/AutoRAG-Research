@@ -41,7 +41,7 @@ def import_db(db_name: str, input_dir: Path) -> None:
             for i in range(0, len(chunk_ids), batch_size):
                 batch_ids = chunk_ids[i : i + batch_size]
                 batch_embs = chunk_embs[i : i + batch_size]
-                for cid, emb in zip(batch_ids, batch_embs):
+                for cid, emb in zip(batch_ids, batch_embs, strict=True):
                     emb_str = "[" + ",".join(str(float(v)) for v in emb) + "]"
                     conn.execute(
                         text("UPDATE chunk SET embedding = :emb WHERE id = :id"),
@@ -61,7 +61,7 @@ def import_db(db_name: str, input_dir: Path) -> None:
             for i in range(0, len(query_ids), batch_size):
                 batch_ids = query_ids[i : i + batch_size]
                 batch_embs = query_embs[i : i + batch_size]
-                for qid, emb in zip(batch_ids, batch_embs):
+                for qid, emb in zip(batch_ids, batch_embs, strict=True):
                     emb_str = "[" + ",".join(str(float(v)) for v in emb) + "]"
                     conn.execute(
                         text("UPDATE query SET embedding = :emb WHERE id = :id"),
@@ -115,12 +115,12 @@ def main():
         if not (input_dir / f"{db_name}_chunk_embs.npy").exists():
             print(f"  SKIP {db_name}: no embedding files found")
             continue
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"DB: {db_name}")
         import_db(db_name, input_dir)
         verify_db(db_name)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("All done!")
 
 

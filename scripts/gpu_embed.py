@@ -33,7 +33,8 @@ def get_model_config(db_name: str) -> tuple[str, bool]:
     for suffix, config in MODEL_MAP.items():
         if db_name.endswith(suffix):
             return config
-    raise ValueError(f"Unknown db pattern: {db_name}")
+    msg = f"Unknown db pattern: {db_name}"
+    raise ValueError(msg)
 
 
 def embed_texts(model: SentenceTransformer, texts: list[str], normalize: bool, batch_size: int = 256) -> np.ndarray:
@@ -49,7 +50,7 @@ def process_db(input_file: Path, output_dir: Path, models_cache: dict, batch_siz
     db_name = data["db_name"]
     model_name, normalize = get_model_config(db_name)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"DB: {db_name}")
     print(f"Model: {model_name}")
     print(f"Normalize: {normalize}")
@@ -132,9 +133,10 @@ def main():
         except Exception as e:
             print(f"ERROR processing {jf.name}: {e}")
             import traceback
+
             traceback.print_exc()
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("All done!")
 
 
